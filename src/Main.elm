@@ -10,26 +10,18 @@ import Playground exposing (..)
 --Model--
 
 
-fst ( x, y ) =
-    x
-
-
-snd ( x, y ) =
-    y
-
-
 main =
     game view update initModel
 
 
 initModel =
-    { wesMoves = ( 0, 0 )
+    { wesMoves = { x = 0, y = 0 }
     , bulletShoots = ()
     }
 
 
 type alias Model =
-    { wesMoves : ( Int, Int )
+    { wesMoves : { x : Int, y : Int }
     , bulletShoots : ()
     }
 
@@ -41,11 +33,17 @@ type alias Model =
 update computer model =
     let
         updatedWesMoves =
-            ( fst model.wesMoves + toX computer.keyboard
-            , snd model.wesMoves + toY computer.keyboard
-            )
+            { x = model.wesMoves.x + toX computer.keyboard
+            , y = model.wesMoves.y + toY computer.keyboard
+            }
+
+        updatedBulletShoots =
+            ()
     in
-    { model | wesMoves = updatedWesMoves }
+    { model
+        | wesMoves = updatedWesMoves
+        , bulletShoots = updatedBulletShoots
+    }
 
 
 
@@ -56,7 +54,7 @@ view computer model =
     [ theBackground 0
         |> moveDown 385
     , myWesley -100
-        |> move (fst model.wesMoves) (snd model.wesMoves)
+        |> move model.wesMoves.x model.wesMoves.y
         |> scale 0.5
         |> moveRight -300
     , theGround 0
