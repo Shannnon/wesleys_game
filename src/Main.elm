@@ -6,8 +6,26 @@ import Html.Attributes exposing (src)
 import Playground exposing (..)
 
 
+
+--Model--
+
+
 main =
     game view update ( 0, 0 )
+
+
+
+--Update--
+
+
+update computer ( x, y ) =
+    ( x + toX computer.keyboard
+    , y + toY computer.keyboard
+    )
+
+
+
+--View--
 
 
 view computer ( x, y ) =
@@ -22,12 +40,6 @@ view computer ( x, y ) =
     , theTarget 0
         |> moveDown 385
     ]
-
-
-update computer ( x, y ) =
-    ( x + toX computer.keyboard
-    , y + toY computer.keyboard
-    )
 
 
 theBullet computer =
