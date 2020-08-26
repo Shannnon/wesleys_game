@@ -16,13 +16,13 @@ main =
 
 initModel =
     { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = ()
+    , bulletShoots = { y = 0 }
     }
 
 
 type alias Model =
-    { wesMoves : { x : Int, y : Int }
-    , bulletShoots : ()
+    { wesMoves : { x : Number, y : Number }
+    , bulletShoots : { y : Number }
     }
 
 
@@ -37,8 +37,13 @@ update computer model =
             , y = model.wesMoves.y + toY computer.keyboard
             }
 
+        updatedBulletShoots : { y : Number }
         updatedBulletShoots =
-            ()
+            if computer.keyboard.space then
+                { y = model.bulletShoots.y + 10 }
+
+            else
+                model.bulletShoots
     in
     { model
         | wesMoves = updatedWesMoves
@@ -51,9 +56,9 @@ update computer model =
 
 
 view computer model =
-    [ theBackground 0
+    [ theBackground
         |> moveDown 385
-    , myWesley -100
+    , myWesley model.bulletShoots
         |> move model.wesMoves.x model.wesMoves.y
         |> scale 0.5
         |> moveRight -300
@@ -79,7 +84,7 @@ theTarget time =
         ]
 
 
-theBackground computer =
+theBackground =
     group
         [ rectangle lightBlue 10000 500 |> moveUp 500
         ]
@@ -91,7 +96,7 @@ theGround computer =
         ]
 
 
-myWesley computer =
+myWesley bulletShootsValue =
     group
         [ square (rgb 212 162 106) 40 |> moveDown 40
         , oval (rgb 212 162 106) 20 40
@@ -116,7 +121,7 @@ myWesley computer =
         , rectangle white 40 3 |> moveDown 13
         , wesBody |> moveDown 95
         , wesGun |> moveRight 160 |> moveDown 60
-        , theBullet 0 |> moveRight 215 |> moveDown 45
+        , theBullet 0 |> moveRight (bulletShootsValue.y + 215) |> moveDown 45
         ]
 
 
