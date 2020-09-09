@@ -40,7 +40,7 @@ update computer model =
         updatedBulletShoots : { y : Number }
         updatedBulletShoots =
             if computer.keyboard.space then
-                { y = model.bulletShoots.y + 10 }
+                { y = model.bulletShoots.y + 180 }
 
             else
                 model.bulletShoots
@@ -58,13 +58,13 @@ update computer model =
 view computer model =
     [ theBackground
         |> moveDown 385
+    , theTarget 0
+        |> moveDown 385
     , myWesley model.bulletShoots
         |> move model.wesMoves.x model.wesMoves.y
         |> scale 0.5
         |> moveRight -300
     , theGround 0
-        |> moveDown 385
-    , theTarget 0
         |> moveDown 385
     ]
 
