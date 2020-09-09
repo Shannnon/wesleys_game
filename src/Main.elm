@@ -16,13 +16,7 @@ main =
 
 initModel =
     { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = { y = 0, fired = False }
-    }
-
-
-type alias Model =
-    { wesMoves : { x : Number, y : Number }
-    , bulletShoots : { y : Number }
+    , bulletShoots = { x = 0, fired = False }
     }
 
 
@@ -43,14 +37,14 @@ update computer model =
                     myBulletShoots =
                         model.bulletShoots
                 in
-                { myBulletShoots | y = model.bulletShoots.y + 5, fired = True }
+                { myBulletShoots | x = model.bulletShoots.x + 5, fired = True }
 
             else if model.bulletShoots.fired then
                 let
                     myBulletShoots =
                         model.bulletShoots
                 in
-                { myBulletShoots | y = model.bulletShoots.y + 5 }
+                { myBulletShoots | x = model.bulletShoots.x + 5 }
 
             else
                 model.bulletShoots
@@ -131,7 +125,7 @@ myWesley bulletShootsValue =
         , rectangle white 40 3 |> moveDown 13
         , wesBody |> moveDown 95
         , wesGun |> moveRight 160 |> moveDown 60
-        , theBullet 0 |> moveRight (bulletShootsValue.y + 215) |> moveDown 45
+        , theBullet 0 |> moveRight (bulletShootsValue.x + 215) |> moveDown 45
         ]
 
 
