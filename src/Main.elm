@@ -16,7 +16,7 @@ main =
 
 initModel =
     { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = { y = 0 }
+    , bulletShoots = { y = 0, fired = False }
     }
 
 
@@ -37,10 +37,20 @@ update computer model =
             , y = model.wesMoves.y + toY computer.keyboard
             }
 
-        updatedBulletShoots : { y : Number }
         updatedBulletShoots =
             if computer.keyboard.space then
-                { y = model.bulletShoots.y + 180 }
+                let
+                    myBulletShoots =
+                        model.bulletShoots
+                in
+                { myBulletShoots | y = model.bulletShoots.y + 5, fired = True }
+
+            else if model.bulletShoots.fired then
+                let
+                    myBulletShoots =
+                        model.bulletShoots
+                in
+                { myBulletShoots | y = model.bulletShoots.y + 5 }
 
             else
                 model.bulletShoots
