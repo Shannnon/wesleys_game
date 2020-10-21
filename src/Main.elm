@@ -1,8 +1,5 @@
 module Main exposing (..)
 
-import Browser
-import Html exposing (Html, div, h1, img, text)
-import Html.Attributes exposing (src)
 import Playground exposing (..)
 
 
@@ -16,8 +13,25 @@ main =
 
 initModel =
     { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = { x = 0, fired = False }
+    , bulletShoots = NotFired
     }
+
+
+type alias WesMoves =
+    { x : Number, y : Number }
+
+
+type alias InFlightPosition =
+    Number
+
+
+type alias FrozenOriginWesOffset =
+    WesMoves
+
+
+type BulletShoots
+    = NotFired
+    | Fired InFlightPosition FrozenOriginWesOffset
 
 
 
@@ -32,22 +46,16 @@ update computer model =
             }
 
         updatedBulletShoots =
-            if computer.keyboard.space then
-                let
-                    myBulletShoots =
-                        model.bulletShoots
-                in
-                { myBulletShoots | x = model.bulletShoots.x + 5, fired = True }
+            case model.bulletShoots of
+                Fired x wP ->
+                    Fired (x + 2.5) wP
 
-            else if model.bulletShoots.fired then
-                let
-                    myBulletShoots =
-                        model.bulletShoots
-                in
-                { myBulletShoots | x = model.bulletShoots.x + 5 }
+                NotFired ->
+                    if computer.keyboard.space then
+                        Fired 5 model.wesMoves
 
-            else
-                model.bulletShoots
+                    else
+                        NotFired
     in
     { model
         | wesMoves = updatedWesMoves
@@ -65,15 +73,16 @@ view computer model =
     , theTarget 0
         |> moveDown 385
     , myWesley model.bulletShoots
-        |> move model.wesMoves.x model.wesMoves.y
         |> scale 0.5
         |> moveRight -300
+        |> move model.wesMoves.x model.wesMoves.y
+    , shotBullet model
     , theGround 0
         |> moveDown 385
     ]
 
 
-theBullet computer =
+theBullet =
     group
         [ circle black 10 ]
 
@@ -100,7 +109,34 @@ theGround computer =
         ]
 
 
+shotBullet model =
+    let
+        moveFunction =
+            case model.bulletShoots of
+                NotFired ->
+                    move model.wesMoves.x model.wesMoves.y
+
+                Fired x frozenWP ->
+                    move (frozenWP.x + x) frozenWP.y
+    in
+    group
+        [ circle black 10 ]
+        |> scale 0.5
+        |> moveRight -191
+        |> moveDown 22.5
+        |> moveFunction
+
+
 myWesley bulletShootsValue =
+    let
+        bulletXValue =
+            case bulletShootsValue of
+                NotFired ->
+                    0
+
+                Fired x _ ->
+                    x
+    in
     group
         [ square (rgb 212 162 106) 40 |> moveDown 40
         , oval (rgb 212 162 106) 20 40
@@ -125,7 +161,6 @@ myWesley bulletShootsValue =
         , rectangle white 40 3 |> moveDown 13
         , wesBody |> moveDown 95
         , wesGun |> moveRight 160 |> moveDown 60
-        , theBullet 0 |> moveRight (bulletShootsValue.x + 215) |> moveDown 45
         ]
 
 
