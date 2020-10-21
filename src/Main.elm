@@ -17,9 +17,21 @@ initModel =
     }
 
 
+type alias WesMoves =
+    { x : Number, y : Number }
+
+
+type alias InFlightPosition =
+    Number
+
+
+type alias FrozenOriginWesOffset =
+    WesMoves
+
+
 type BulletShoots
     = NotFired
-    | Fired Number
+    | Fired InFlightPosition FrozenOriginWesOffset
 
 
 
@@ -35,12 +47,12 @@ update computer model =
 
         updatedBulletShoots =
             case model.bulletShoots of
-                Fired x ->
-                    Fired <| x + 5
+                Fired x wP ->
+                    Fired (x + 2.5) wP
 
                 NotFired ->
                     if computer.keyboard.space then
-                        Fired 5
+                        Fired 5 model.wesMoves
 
                     else
                         NotFired
@@ -61,15 +73,16 @@ view computer model =
     , theTarget 0
         |> moveDown 385
     , myWesley model.bulletShoots
-        |> move model.wesMoves.x model.wesMoves.y
         |> scale 0.5
         |> moveRight -300
+        |> move model.wesMoves.x model.wesMoves.y
+    , shotBullet model
     , theGround 0
         |> moveDown 385
     ]
 
 
-theBullet computer =
+theBullet =
     group
         [ circle black 10 ]
 
@@ -96,6 +109,24 @@ theGround computer =
         ]
 
 
+shotBullet model =
+    let
+        moveFunction =
+            case model.bulletShoots of
+                NotFired ->
+                    move model.wesMoves.x model.wesMoves.y
+
+                Fired x frozenWP ->
+                    move (frozenWP.x + x) frozenWP.y
+    in
+    group
+        [ circle black 10 ]
+        |> scale 0.5
+        |> moveRight -191
+        |> moveDown 22.5
+        |> moveFunction
+
+
 myWesley bulletShootsValue =
     let
         bulletXValue =
@@ -103,7 +134,7 @@ myWesley bulletShootsValue =
                 NotFired ->
                     0
 
-                Fired x ->
+                Fired x _ ->
                     x
     in
     group
@@ -130,7 +161,6 @@ myWesley bulletShootsValue =
         , rectangle white 40 3 |> moveDown 13
         , wesBody |> moveDown 95
         , wesGun |> moveRight 160 |> moveDown 60
-        , theBullet 0 |> moveRight (bulletXValue + 215) |> moveDown 45
         ]
 
 
