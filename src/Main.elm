@@ -1,8 +1,5 @@
 module Main exposing (..)
 
-import Browser
-import Html exposing (Html, div, h1, img, text)
-import Html.Attributes exposing (src)
 import Playground exposing (..)
 
 
@@ -16,8 +13,13 @@ main =
 
 initModel =
     { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = { x = 0, fired = False }
+    , bulletShoots = NotFired
     }
+
+
+type BulletShoots
+    = NotFired
+    | Fired Number
 
 
 
@@ -32,22 +34,16 @@ update computer model =
             }
 
         updatedBulletShoots =
-            if computer.keyboard.space then
-                let
-                    myBulletShoots =
-                        model.bulletShoots
-                in
-                { myBulletShoots | x = model.bulletShoots.x + 5, fired = True }
+            case model.bulletShoots of
+                Fired x ->
+                    Fired <| x + 5
 
-            else if model.bulletShoots.fired then
-                let
-                    myBulletShoots =
-                        model.bulletShoots
-                in
-                { myBulletShoots | x = model.bulletShoots.x + 5 }
+                NotFired ->
+                    if computer.keyboard.space then
+                        Fired 5
 
-            else
-                model.bulletShoots
+                    else
+                        NotFired
     in
     { model
         | wesMoves = updatedWesMoves
@@ -101,6 +97,15 @@ theGround computer =
 
 
 myWesley bulletShootsValue =
+    let
+        bulletXValue =
+            case bulletShootsValue of
+                NotFired ->
+                    0
+
+                Fired x ->
+                    x
+    in
     group
         [ square (rgb 212 162 106) 40 |> moveDown 40
         , oval (rgb 212 162 106) 20 40
@@ -125,7 +130,7 @@ myWesley bulletShootsValue =
         , rectangle white 40 3 |> moveDown 13
         , wesBody |> moveDown 95
         , wesGun |> moveRight 160 |> moveDown 60
-        , theBullet 0 |> moveRight (bulletShootsValue.x + 215) |> moveDown 45
+        , theBullet 0 |> moveRight (bulletXValue + 215) |> moveDown 45
         ]
 
 
