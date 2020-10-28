@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Playground exposing (..)
+import Time
 
 
 
@@ -11,9 +12,23 @@ main =
     game view update initModel
 
 
+initModel : Model
 initModel =
-    { wesMoves = { x = 0, y = 0 }
-    , bulletShoots = NotFired
+    { wesMoves = { x = -300, y = 0 }
+    , lastShotFired = NeverFired
+    , shotBullets = [ NotFired ]
+    }
+
+
+type LastShotFired
+    = NeverFired
+    | LastFiredStamp Time
+
+
+type alias Model =
+    { wesMoves : WesMoves
+    , lastShotFired : LastShotFired
+    , shotBullets : List ShotBullet
     }
 
 
@@ -29,7 +44,7 @@ type alias FrozenOriginWesOffset =
     WesMoves
 
 
-type BulletShoots
+type ShotBullet
     = NotFired
     | Fired InFlightPosition FrozenOriginWesOffset
 
@@ -38,6 +53,7 @@ type BulletShoots
 --Update--
 
 
+update : Computer -> Model -> Model
 update computer model =
     let
         updatedWesMoves =
@@ -46,40 +62,78 @@ update computer model =
             }
 
         updatedBulletShoots =
-            case model.bulletShoots of
-                Fired x wP ->
-                    Fired (x + 2.5) wP
+            updateBulletsShot computer model
 
-                NotFired ->
-                    if computer.keyboard.space then
-                        Fired 5 model.wesMoves
-
-                    else
-                        NotFired
+        updatedLastFired =
+            updateLastFired computer model.lastShotFired
     in
     { model
         | wesMoves = updatedWesMoves
-        , bulletShoots = updatedBulletShoots
+        , lastShotFired = updatedLastFired
+        , shotBullets = updatedBulletShoots
     }
+
+
+updateLastFired computer previousFiredValue =
+    if computer.keyboard.space then
+        LastFiredStamp computer.time
+
+    else
+        previousFiredValue
+
+
+updateBulletsShot computer model =
+    let
+        incrementedBullets =
+            List.foldl (bulletIncrementer computer.screen.width) [] model.shotBullets
+    in
+    case computer.keyboard.space of
+        True ->
+            Fired 15 model.wesMoves :: incrementedBullets
+
+        _ ->
+            incrementedBullets
+
+
+moreThanMillisFromPosix checker nowPosix thenPosix =
+    let
+        delta =
+            Time.posixToMillis nowPosix - Time.posixToMillis thenPosix
+    in
+    if delta > checker then
+        True
+
+    else
+        False
+
+
+bulletIncrementer width bullet acc =
+    case bullet of
+        Fired x wP ->
+            if x > (width * 2) then
+                acc
+
+            else
+                Fired (x + 5) wP :: acc
+
+        NotFired ->
+            NotFired :: acc
 
 
 
 --View--
 
 
+view : Computer -> Model -> List Shape
 view computer model =
-    [ theBackground
-        |> moveDown 385
-    , theTarget 0
-        |> moveDown 385
-    , myWesley model.bulletShoots
+    [ theBackground |> moveDown 385
+    , theGround 0 |> moveDown 385
+    , theTarget 0 |> moveDown 385
+    , myWesley
         |> scale 0.5
-        |> moveRight -300
         |> move model.wesMoves.x model.wesMoves.y
-    , shotBullet model
-    , theGround 0
-        |> moveDown 385
     ]
+        ++ shotBulletsView model
 
 
 theBullet =
@@ -109,10 +163,15 @@ theGround computer =
         ]
 
 
-shotBullet model =
+shotBulletsView model =
+    List.map (shotBulletView model) model.shotBullets
+
+
+shotBulletView model singleBullet =
     let
+        moveFunction : Shape -> Shape
         moveFunction =
-            case model.bulletShoots of
+            case singleBullet of
                 NotFired ->
                     move model.wesMoves.x model.wesMoves.y
 
@@ -120,23 +179,13 @@ shotBullet model =
                     move (frozenWP.x + x) frozenWP.y
     in
     group
-        [ circle black 10 ]
-        |> scale 0.5
-        |> moveRight -191
+        [ circle black 5 ]
         |> moveDown 22.5
+        |> moveRight 108
         |> moveFunction
 
 
-myWesley bulletShootsValue =
-    let
-        bulletXValue =
-            case bulletShootsValue of
-                NotFired ->
-                    0
-
-                Fired x _ ->
-                    x
-    in
+myWesley =
     group
         [ square (rgb 212 162 106) 40 |> moveDown 40
         , oval (rgb 212 162 106) 20 40
