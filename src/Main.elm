@@ -25,11 +25,19 @@ type LastShotFired
     | LastFiredStamp Time
 
 
+
+-- this is where the type alias' we made up are used
+
+
 type alias Model =
     { wesMoves : WesMoves
     , lastShotFired : LastShotFired
     , shotBullets : List ShotBullet
     }
+
+
+
+-- this is saying WesMoves is an x and y coordinantes
 
 
 type alias WesMoves =
@@ -44,6 +52,10 @@ type alias FrozenOriginWesOffset =
     WesMoves
 
 
+
+-- this one is a custom type
+
+
 type ShotBullet
     = NotFired
     | Fired InFlightPosition FrozenOriginWesOffset
@@ -56,14 +68,17 @@ type ShotBullet
 update : Computer -> Model -> Model
 update computer model =
     let
+        -- this is where I tell it that if the arrow keys are hit, Wesley moves
         updatedWesMoves =
             { x = model.wesMoves.x + toX computer.keyboard
             , y = model.wesMoves.y + toY computer.keyboard
             }
 
+        -- not sure I fully grasp this part
         updatedBulletShoots =
             updateBulletsShot computer model
 
+        -- or this part
         updatedLastFired =
             updateLastFired computer model.lastShotFired
     in
@@ -72,6 +87,14 @@ update computer model =
         , lastShotFired = updatedLastFired
         , shotBullets = updatedBulletShoots
     }
+
+
+
+{- I can understand where this is all going (from here to line 146)
+   and when I look at it, it makes sense
+   but I don't feel like I can repeat it or fully comprehend it, and yes I'm
+   practicing utilizing comments more :-D
+-}
 
 
 updateLastFired computer previousFiredValue =
@@ -86,13 +109,26 @@ updateBulletsShot computer model =
     let
         incrementedBullets =
             List.foldl (bulletIncrementer computer.screen.width) [] model.shotBullets
+
+        canFire =
+            calcCanFire computer.time model.lastShotFired
     in
-    case computer.keyboard.space of
-        True ->
+    case ( canFire, computer.keyboard.space ) of
+        ( True, True ) ->
             Fired 15 model.wesMoves :: incrementedBullets
 
         _ ->
             incrementedBullets
+
+
+calcCanFire : Time -> LastShotFired -> Bool
+calcCanFire (Time currentPosix) lastShotFired =
+    case lastShotFired of
+        NeverFired ->
+            True
+
+        LastFiredStamp (Time lastFiredPosix) ->
+            True
 
 
 moreThanMillisFromPosix checker nowPosix thenPosix =
@@ -122,25 +158,45 @@ bulletIncrementer width bullet acc =
 
 
 --View--
+-- I feel really good about making updates in view, it speaks to me and I get it lol
+{- I wanted to make the target move, so I added the zigzag function which worked
+   becasue time can now be recognized (thanks to Doug lol) but it broke EVERYTHING
+   I had to reconfigure all of the other elements so they fit on the screen they way
+   they were before. Which after a while I figured out, but I have no idea why
+   it happened. Now let's see if I can remember how to push this to Github so you
+   can see my branch... lol
+-}
 
 
 view : Computer -> Model -> List Shape
 view computer model =
-    [ theBackground
+    [ theBackground computer
+    , theTarget 1000
         |> moveDown 385
-    , theGround 0 |> moveDown 385
-    , theTarget 0 |> moveDown 385
+        |> moveRight 0
+        |> moveX (zigzag 15 -15 5 computer.time)
     , myWesley
         |> scale 0.5
         |> move model.wesMoves.x
             model.wesMoves.y
     ]
         ++ shotBulletsView model
+        ++ [ theGround computer |> moveDown 385
+           ]
 
 
-theBackground =
+
+-- I added the computer.screen to clean it up a bit, was a great idea!
+{- When I added this to make it look cleaner, I ran into a number of issues,
+   one being that it didn't work lol. The reason it didn't work is that
+   theBackground and theGround weren't given computer, therefore it didn't know
+   what to do with computer.screen.
+-}
+
+
+theBackground computer =
     group
-        [ rectangle lightBlue 10000 500 |> moveUp 500
+        [ rectangle lightBlue computer.screen.width computer.screen.height
         ]
 
 
@@ -161,7 +217,7 @@ theTarget time =
 
 theGround computer =
     group
-        [ rectangle lightGreen 10000 500
+        [ rectangle lightGreen computer.screen.width 500
         ]
 
 
